@@ -35,14 +35,6 @@ class Job(pygame.sprite.Sprite):
             triangle = [[SPEED_ONE_X+(i-1)*SPEED_SPACE, SPEED_ONE_Y], [SPEED_THREE_X+(i-1)*SPEED_SPACE, SPEED_THREE_Y], [SPEED_TWO_X+(i-1)*SPEED_SPACE,SPEED_TWO_Y]]
             pygame.draw.polygon(self.surf, SPEED_COLOR, triangle)
             pygame.draw.polygon(self.surf, (0,0,0), triangle, SPEED_BORDER)
-
-        gpu_requirment_bar_outer = pygame.Rect(GPU_REQUIRE_X, GPU_REQUIRE_Y, GPU_REQUIRE_WIDTH, GPU_REQUIRE_HEIGHT)
-        for i in range(1, self.gpu_requirement+1):
-            inner = pygame.Rect(GPU_REQUIRE_X+(i-1)*GPU_REQUIRE_CUBE_WIDTH, GPU_REQUIRE_Y, GPU_REQUIRE_CUBE_WIDTH, GPU_REQUIRE_CUBE_HEIGHT)
-            pygame.draw.rect(self.surf, GPU_REQUIRMENT_COLOR, inner)
-            pygame.draw.rect(self.surf, (0,0,0), inner,GPU_REQUIRE_BORDER)
-        pygame.draw.rect(self.surf, (0,0,0), gpu_requirment_bar_outer, GPU_REQUIRE_BORDER)
-
         iteration_bar_outer = pygame.Rect(ITERATION_BAR_X, ITERATION_BAR_Y, ITERATION_BAR_WIDTH * 2000,
                                     ITERATION_BAR_HEIGHT)
         pygame.draw.rect(self.surf, (0, 0, 0), iteration_bar_outer, ITERATION_BAR_BORDER)
@@ -52,6 +44,7 @@ class Job(pygame.sprite.Sprite):
 
 
     def update(self, queue):
+        self.update_gpu_requirement_bar()
         if len(self.assigned) < self.gpu_requirement:
             self.is_running = False
         else:
@@ -91,45 +84,29 @@ class Job(pygame.sprite.Sprite):
 
     def update_gpu_requirement_bar(self):
         gpu_requirment_bar_outer = pygame.Rect(GPU_REQUIRE_X, GPU_REQUIRE_Y, GPU_REQUIRE_WIDTH, GPU_REQUIRE_HEIGHT)
-        # for i in range(1, self.gpu_requirement + 1):
-        #     inner = pygame.Rect(GPU_REQUIRE_X + (i - 1) * GPU_REQUIRE_CUBE_WIDTH, GPU_REQUIRE_Y, GPU_REQUIRE_CUBE_WIDTH,
-        #                         GPU_REQUIRE_CUBE_HEIGHT)
-        #     pygame.draw.rect(self.surf, GPU_REQUIRMENT_COLOR, inner)
-        #     pygame.draw.rect(self.surf, (0, 0, 0), inner, GPU_REQUIRE_BORDER)
-        # pygame.draw.rect(self.surf, (0, 0, 0), gpu_requirment_bar_outer, GPU_REQUIRE_BORDER)
-        for i in range(1, len(self.assigned) + 1):
+        pygame.draw.rect(self.surf, BACKGROUND_COLOR, gpu_requirment_bar_outer)
+        pygame.draw.rect(self.surf, (0, 0, 0), gpu_requirment_bar_outer, GPU_REQUIRE_BORDER)
+        for i in range(1, self.gpu_requirement + 1):
             inner = pygame.Rect(GPU_REQUIRE_X + (i - 1) * GPU_REQUIRE_CUBE_WIDTH, GPU_REQUIRE_Y, GPU_REQUIRE_CUBE_WIDTH,
                                     GPU_REQUIRE_CUBE_HEIGHT)
             pygame.draw.rect(self.surf, GPU_REQUIRMENT_COLOR, inner)
-            pygame.draw.rect(self.surf, (206, 227, 43), inner, GPU_REQUIRE_BORDER)
-        pygame.draw.rect(self.surf, (0, 0, 0), gpu_requirment_bar_outer, GPU_REQUIRE_BORDER)
+            if i <= len(self.assigned):
+                pygame.draw.rect(self.surf, (206, 227, 43), inner, GPU_REQUIRE_BORDER)
+            else:
+                pygame.draw.rect(self.surf, (0, 0, 0), inner, GPU_REQUIRE_BORDER)
+        for i in range(self.gpu_requirement + 1, len(self.assigned) + 1):
+            inner = pygame.Rect(GPU_REQUIRE_X + (i - 1) * GPU_REQUIRE_CUBE_WIDTH, GPU_REQUIRE_Y, GPU_REQUIRE_CUBE_WIDTH,
+                                GPU_REQUIRE_CUBE_HEIGHT)
+            pygame.draw.rect(self.surf, self.id, inner)
+            pygame.draw.rect(self.surf, (0, 0, 0), inner, GPU_REQUIRE_BORDER)
 
     def pick_gpu(self, gpu):
-        if len(self.assigned) < 10:
-            if not gpu in self.assigned:
+        if not gpu in self.assigned:
+            if len(self.assigned) < 10:
                 gpu.pick_up(self)
                 self.assigned.append(gpu)
-                if len(self.assigned) > self.gpu_requirement:
-                    inner = pygame.Rect(GPU_REQUIRE_X + (len(self.assigned) - 1) * GPU_REQUIRE_CUBE_WIDTH, GPU_REQUIRE_Y,
-                                        GPU_REQUIRE_CUBE_WIDTH,
-                                        GPU_REQUIRE_CUBE_HEIGHT)
-                    pygame.draw.rect(self.surf, self.id, inner)
-                    pygame.draw.rect(self.surf, (0, 0, 0), inner, GPU_REQUIRE_BORDER)
-                else:
-                    inner = pygame.Rect(GPU_REQUIRE_X + (len(self.assigned) - 1) * GPU_REQUIRE_CUBE_WIDTH, GPU_REQUIRE_Y, GPU_REQUIRE_CUBE_WIDTH,
-                                        GPU_REQUIRE_CUBE_HEIGHT)
-                    pygame.draw.rect(self.surf, (206, 227, 43), inner, GPU_REQUIRE_BORDER)
-
-            else:
-                self.release_gpu(gpu)
-                gpu.finished()
-
-    def release_gpu(self, gpu):
-        if len(self.assigned) > self.gpu_requirement:
-            pass
         else:
-            inner = pygame.Rect(GPU_REQUIRE_X + (len(self.assigned) - 1) * GPU_REQUIRE_CUBE_WIDTH, GPU_REQUIRE_Y,
-                                GPU_REQUIRE_CUBE_WIDTH,
-                                GPU_REQUIRE_CUBE_HEIGHT)
-            pygame.draw.rect(self.surf, (0, 0, 0), inner, GPU_REQUIRE_BORDER)
+            self.release_gpu(gpu)
+            gpu.finished()
+    def release_gpu(self, gpu):
         self.assigned.remove(gpu)
