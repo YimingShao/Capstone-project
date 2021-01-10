@@ -58,10 +58,8 @@ class Device(pygame.sprite.Sprite):
         cluster.surf.blit(self.surf, (self.x, self.y))
 
     def selected(self):
-        pygame.draw.rect(self.surf, (0,0,0), self.rect, DEVICE_BORDER_SELECTED)
-        # device.surf.blit(self.surf, (self.x, self.y))
+        pygame.draw.rect(self.surf, RACK_SELECTED_COLOR, self.rect, DEVICE_BORDER_SELECTED)
 
     def unselect(self):
         pygame.draw.rect(self.surf, BACKGROUND_COLOR, self.rect, DEVICE_BORDER_SELECTED)
         pygame.draw.rect(self.surf, (0,0,0), self.rect, DEVICE_BORDER)
-        # device.surf.blit(self.surf, (self.x, self.y))

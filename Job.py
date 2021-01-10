@@ -13,12 +13,46 @@ class Job(pygame.sprite.Sprite):
         self.y = y_coor
         self.speed = random.randint(1,3)
         self.job_size = random.randint(int(JOB_SIZE_HEIGHT/10), JOB_SIZE_HEIGHT)
-        self.gpu_requirement = random.randint(1,4)
+        self.res_vec = random.randint(1, 4)
         self.iteration = 0
         self.iteration_left = 2000
         self.id = identification
-        self.assigned = []
+        self.assigned = set()
         self.is_running = False
+
+        # cbb. consider the first and only element of the res_vec to be the
+        # minimum number of GPUs requested.
+
+        self.enter_time = None
+        self.start_time = -1  # not being allocated
+        self.finish_time = -1
+        self.stepcounter = 0
+        self.d_ex = None  # Model flops in Flops. distance per example
+        self.m = None
+        # self.d_m = self.d_ex * self.m  # Model flops computed per minibatch
+        self.gradsize = None  # in MB
+        self.modelname = None
+
+        self.d_f = 0  # formerly self.fakecompdist
+        self.d_done = 0  # formerly self.compdistdone
+        self.d_rem = self.getcompdistleft()  # formerly self.compdistleft
+        self.fraction_done = 0
+        self.tt_m = None
+        self.rt_m = 0  # minibatch reduction time
+        self.v_m = 0
+
+        self.ts_togo = 0  # extrapolate forward the number of rows of
+        # time needed based on currnumgpusassigned and current multispeed
+        self.ts_done = 0  # extrapolate backward the number of
+        # rows of time done based on currnumgpusassigned and current multispeed
+
+        self.singlejoblimbw = None  # since a job's edgeset is associated
+        # with the slot, consider associating singlejoblimbw and multijoblimbw
+        # with slots instead.
+        self.multijoblimbw = None
+        self.scale = 1  # will be assigned
+        self.gpusassigned_set = set()  # None for now but will be an np.array
+        # Todo, use set, copy to my job class
 
         pygame.draw.rect(self.surf, (0,0,0), self.rect, JOB_BORDER)
         id_rect = pygame.Rect(ID_RECT_X, ID_RECT_Y, ID_RECT_WIDTH, ID_RECT_WIDTH)
@@ -43,9 +77,10 @@ class Job(pygame.sprite.Sprite):
         pygame.draw.rect(self.surf, PROGRESS_BAR_COLOR, iteration_bar)
 
 
-    def update(self, queue):
+    def update(self, queue, y_coor):
+        self.y = y_coor
         self.update_gpu_requirement_bar()
-        if len(self.assigned) < self.gpu_requirement:
+        if len(self.assigned) < self.res_vec:
             self.is_running = False
         else:
             self.is_running = True
@@ -59,8 +94,6 @@ class Job(pygame.sprite.Sprite):
                         [RUNNING_THREE_X, RUNNING_THREE_Y]]
             pygame.draw.polygon(self.surf, BACKGROUND_COLOR, triangle)
             pygame.draw.circle(self.surf, JOB_STOP_COLOR, (STOPPED_JOB_X, STOPPED_JOB_Y), STOPPED_JOB_RADIUS)
-        else:
-            pass
         queue.surf.blit(self.surf, (self.x, self.y))
 
     def progressing(self):
@@ -86,7 +119,7 @@ class Job(pygame.sprite.Sprite):
         gpu_requirment_bar_outer = pygame.Rect(GPU_REQUIRE_X, GPU_REQUIRE_Y, GPU_REQUIRE_WIDTH, GPU_REQUIRE_HEIGHT)
         pygame.draw.rect(self.surf, BACKGROUND_COLOR, gpu_requirment_bar_outer)
         pygame.draw.rect(self.surf, (0, 0, 0), gpu_requirment_bar_outer, GPU_REQUIRE_BORDER)
-        for i in range(1, self.gpu_requirement + 1):
+        for i in range(1, self.res_vec + 1):
             inner = pygame.Rect(GPU_REQUIRE_X + (i - 1) * GPU_REQUIRE_CUBE_WIDTH, GPU_REQUIRE_Y, GPU_REQUIRE_CUBE_WIDTH,
                                     GPU_REQUIRE_CUBE_HEIGHT)
             pygame.draw.rect(self.surf, GPU_REQUIRMENT_COLOR, inner)
@@ -94,7 +127,7 @@ class Job(pygame.sprite.Sprite):
                 pygame.draw.rect(self.surf, (206, 227, 43), inner, GPU_REQUIRE_BORDER)
             else:
                 pygame.draw.rect(self.surf, (0, 0, 0), inner, GPU_REQUIRE_BORDER)
-        for i in range(self.gpu_requirement + 1, len(self.assigned) + 1):
+        for i in range(self.res_vec + 1, len(self.assigned) + 1):
             inner = pygame.Rect(GPU_REQUIRE_X + (i - 1) * GPU_REQUIRE_CUBE_WIDTH, GPU_REQUIRE_Y, GPU_REQUIRE_CUBE_WIDTH,
                                 GPU_REQUIRE_CUBE_HEIGHT)
             pygame.draw.rect(self.surf, self.id, inner)
@@ -104,9 +137,13 @@ class Job(pygame.sprite.Sprite):
         if not gpu in self.assigned:
             if len(self.assigned) < 10:
                 gpu.pick_up(self)
-                self.assigned.append(gpu)
+                self.assigned.add(gpu)
         else:
             self.release_gpu(gpu)
             gpu.finished()
+
     def release_gpu(self, gpu):
         self.assigned.remove(gpu)
+
+    def getcompdistleft(self):
+        return self.d_f - self.d_done
