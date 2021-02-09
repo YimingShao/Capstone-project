@@ -5,9 +5,6 @@ from side_view import Side_view
 from commands import *
 from variable import *
 
-# import parameters_gpucluster
-# from environment_gpucluster import Env
-# from gentopology import SimpleNetworkClass
 
 # Initialize the game windowD
 pygame.init()
@@ -21,6 +18,7 @@ rack3 = Rack(CLUSTER_SPACE, CLUSTER_SPACE * 2 + CLUSTER_HEIGHT)
 rack4 = Rack(CLUSTER_SPACE * 2 + CLUSTER_WIDTH, CLUSTER_SPACE * 2 + CLUSTER_HEIGHT)
 
 jobqueue = Job_queue(rack2, QUEUE_X, CLUSTER_SPACE)
+create_env(jobqueue)
 current_rack = rack1
 
 rack1.set_up(None, rack3, None, rack2)
@@ -42,11 +40,11 @@ MAX_j = len(rack1.container[0]) * 4 - 1
 initial_time = time.perf_counter()
 current_job = None
 
-# pa = parameters_gpucluster.Parameters()
-# snc = SimpleNetworkClass()
-# env = Env(pa, snc)
-
+iteration = 0
 while running:
+
+    print(get_env().get_reward_fullpreempt())
+
     current_rack.selected()
     # Todo, updates
     '''
@@ -64,9 +62,9 @@ while running:
     if  not current_job in jobqueue.slot:
         current_job = None
 
-    if (time.perf_counter() - initial_time > 1 and len(jobqueue.slot) <= 31):
-        color = color_gen(n)
-        jobqueue.insert(color)
+    if (time.perf_counter() - initial_time > 1 and len(jobqueue.slot) < 32):
+
+        jobqueue.insert()
         initial_time = time.perf_counter()
 
     if isinstance(current_rack, Rack):
@@ -104,8 +102,13 @@ while running:
             elif event.key == pygame.K_SPACE:
                 if isinstance(current_rack, Rack):
                     if current_job != None:
-                        current_job.pick_gpu(current_rack.gpu_all_list[i][j])
+                        current_job.pick_gpu(current_rack.gpu_all_list[i][j], jobqueue)
                 else:
                     current_job = current_rack.pick_up_job(job_i, current_page)
+    iteration += 1
+    if iteration > 10:
+        iteration = 0
+        get_env().advance_runningjobs_onestep()
     pygame.display.update()
+
 

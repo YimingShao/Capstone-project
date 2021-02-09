@@ -29,7 +29,7 @@ class GPU(pygame.sprite.Sprite):
         if self.job != None:
             self.job.release_gpu(self)
         self.job = job
-        pygame.draw.rect(self.surf, self.job.id, self.rect)
+        pygame.draw.rect(self.surf, self.job.color_represent, self.rect)
 
     def finished(self):
         self.job = None

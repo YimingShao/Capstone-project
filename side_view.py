@@ -44,7 +44,7 @@ class Preview_page(pygame.sprite.Sprite):
         for i in range(self.focus[0]+1, self.focus[1]+1):
             if len(self.slot) >= i:
                 j = pygame.Rect(PREVIEW_JOB_SPACE, p * PREVIEW_JOB_SPACE + (p-1) * PREVIEW_JOB_HEIGHT, PREVIEW_JOB_WIDTH, PREVIEW_JOB_HEIGHT)
-                pygame.draw.rect(self.surf, self.slot[i-1].id, j)
+                pygame.draw.rect(self.surf, self.slot[i-1].color_represent, j)
             p += 1
         side_view.surf.blit(self.surf, (self.x, self.y))
 

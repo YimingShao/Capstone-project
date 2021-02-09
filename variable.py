@@ -1,5 +1,20 @@
 import pygame
 import random
+import parameters
+from gentopology import createsnc
+from GameEnv import GameEnv
+from collections import deque
+
+pa = parameters.Parameters()
+snc = createsnc(pa.num_machines)
+env = None
+
+def create_env(jobqueue):
+    global env
+    env = GameEnv(pa, snc, jobqueue)
+
+def get_env():
+    return env
 
 
 BACKGROUND_COLOR = (245, 240, 223)
@@ -128,8 +143,8 @@ STOPPED_JOB_RADIUS = int(0.06 * JOB_WDITH)
 STOPPED_JOB_BORDER = int(0.003 * UNIT_LENGTH)
 
 n = 1
-def color_gen(n):
-    ret = []
+def color_gen():
+    global n
     r = int(random.random() * 256)
     g = int(random.random() * 256)
     b = int(random.random() * 256)
@@ -144,3 +159,12 @@ def color_gen(n):
     if n >= 256:
         n = 1
     return (r, g, b)
+
+id_lst = []
+def id_gen():
+    global id_lst
+    if len(id_lst) == 0:
+        for i in range(50):
+            r = random.randint(1, 100)
+            if r not in id_lst: id_lst.append(r)
+    return id_lst.pop()

@@ -1,6 +1,6 @@
 from Job import Job
 from variable import *
-from collections import deque
+
 
 class Job_queue(pygame.sprite.Sprite):
     def __init__(self, left, x_coor, y_coor):
@@ -14,16 +14,18 @@ class Job_queue(pygame.sprite.Sprite):
         self.right = None
         self.x = x_coor
         self.y = y_coor
-        self.slot = deque()
+        self.slot = deque(maxlen=32)
         self.is_selected = False
+        self.running_jobs = {}
+        self.free_jobs = {}
 
-
-    def insert(self, color):
+    def insert(self):
         i = (len(self.slot) + 1) % 8
         if i == 0:
             i = 8
-        j = Job(JOB_SPACE, int(JOB_SPACE * i + (i - 1) * JOB_HEIGHT), color)
+        j = Job(JOB_SPACE, int(JOB_SPACE * i + (i - 1) * JOB_HEIGHT))
         self.slot.append(j)
+        self.free_jobs[j.id] = j
 
 
     def update(self, current_page, job_i):
@@ -66,10 +68,29 @@ class Job_queue(pygame.sprite.Sprite):
         for job in self.slot:
             job.progressing()
             if job.iteration_left <= 0:
-                for gpu in job.assigned:
+                '''
+                Some jobs are finsihed, update bws
+                
+                call findbws once per iteration
+                '''
+                for gpu in job.gpusassigned_set:
                     gpu.finished()
                 remove_lst.append(job)
+                self.running_jobs.pop(job.id)
         for job in remove_lst:
             self.slot.remove(job)
-            color = color_gen(n)
-            self.insert(color)
+            self.insert()
+
+        if len(remove_lst) >= 1:
+            get_env().findlimitingbws()
+
+    def lst_running_jobs(self):
+        return self.running_jobs.values()
+
+    def lst_free_jobs(self):
+        return self.free_jobs.values()
+
+    def find_job(self, id):
+        for job in self.slot:
+            if job.id == id:
+                return job
