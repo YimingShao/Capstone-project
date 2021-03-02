@@ -19,7 +19,7 @@ class Job_queue(pygame.sprite.Sprite):
         self.running_jobs = {}
         self.free_jobs = {}
 
-    def insert(self):
+    def insert_newjob(self):
         i = (len(self.slot) + 1) % 8
         if i == 0:
             i = 8
@@ -64,6 +64,7 @@ class Job_queue(pygame.sprite.Sprite):
         return self.slot[current_page * 8 + job_i]
 
     def progressing_all(self):
+        has_changed = False
         remove_lst = []
         for job in self.slot:
             job.progressing()
@@ -75,11 +76,17 @@ class Job_queue(pygame.sprite.Sprite):
                 '''
                 for gpu in job.gpusassigned_set:
                     gpu.finished()
+                    has_changed = True
                 remove_lst.append(job)
                 self.running_jobs.pop(job.id)
         for job in remove_lst:
             self.slot.remove(job)
-            self.insert()
+            self.insert_newjob()
+
+        if get_current_job() in self.slot and has_changed:
+            index = self.slot.index(get_current_job())
+            set_current_page(int(index/8))
+            set_job_i(index - get_current_page()*8)
 
         if len(remove_lst) >= 1:
             get_env().findlimitingbws()

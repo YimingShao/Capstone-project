@@ -3,7 +3,9 @@ from Job_queue import Job_queue
 from Rack import Rack
 from side_view import Side_view
 from commands import *
-from variable import *
+from variable import SCREEN_WIDTH, SCREEN_HEIGHT, BACKGROUND_COLOR, CLUSTER_SPACE,\
+    CLUSTER_WIDTH, CLUSTER_HEIGHT, QUEUE_X, create_env, get_env,\
+    get_job_i, get_current_page, get_current_job, set_current_job, SIDE_VIEW_Y, SIDE_VIEW_X
 
 
 # Initialize the game windowD
@@ -33,18 +35,14 @@ running = True
 i = 0
 j = 0
 c = 0
-current_page = 0
-job_i = 0
+
 MAX_i = len(rack1.container) - 1
 MAX_j = len(rack1.container[0]) * 4 - 1
 initial_time = time.perf_counter()
-current_job = None
 
 iteration = 0
 while running:
-
-    print(get_env().get_reward_fullpreempt())
-
+    get_env().get_reward_fullpreempt()
     current_rack.selected()
     # Todo, updates
     '''
@@ -56,15 +54,15 @@ while running:
     rack2.update()
     rack3.update()
     rack4.update()
-    jobqueue.update(current_page, job_i)
-    side_view.update(current_page)
+    jobqueue.update(get_current_page(), get_job_i())
+    side_view.update(get_current_page())
 
-    if  not current_job in jobqueue.slot:
-        current_job = None
+    if  not get_current_job()in jobqueue.slot:
+        set_current_job(None)
 
     if (time.perf_counter() - initial_time > 1 and len(jobqueue.slot) < 32):
 
-        jobqueue.insert()
+        jobqueue.insert_newjob()
         initial_time = time.perf_counter()
 
     if isinstance(current_rack, Rack):
@@ -98,13 +96,13 @@ while running:
                 if isinstance(current_rack, Rack):
                     i,j,c = direction_rack_command(event.key, current_rack, MAX_i, MAX_j, i, j, c)
                 else:
-                    job_i, current_page = direction_jobqueue_command(event.key, job_i, current_rack.slot, current_page)
+                    direction_jobqueue_command(event.key, current_rack.slot)
             elif event.key == pygame.K_SPACE:
                 if isinstance(current_rack, Rack):
-                    if current_job != None:
-                        current_job.pick_gpu(current_rack.gpu_all_list[i][j], jobqueue)
+                    if get_current_job() != None:
+                        get_current_job().pick_gpu(current_rack.gpu_all_list[i][j], jobqueue)
                 else:
-                    current_job = current_rack.pick_up_job(job_i, current_page)
+                    set_current_job(current_rack .pick_up_job(get_job_i(), get_current_page()))
     iteration += 1
     if iteration > 10:
         iteration = 0

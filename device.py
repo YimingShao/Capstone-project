@@ -22,7 +22,8 @@ class GPU(pygame.sprite.Sprite):
             pygame.draw.rect(self.surf, (0, 0, 0), self.rect, GPU_BORDER_SELECTED)
         else:
             pygame.draw.rect(self.surf, BACKGROUND_COLOR, self.rect, GPU_BORDER_SELECTED)
-            pygame.draw.rect(self.surf, (0, 0, 0), self.rect, GPU_BORDER)
+            if self.job == None:
+                pygame.draw.rect(self.surf, (0, 0, 0), self.rect, GPU_BORDER)
         device.surf.blit(self.surf, (self.x, self.y))
 
     def pick_up(self, job):

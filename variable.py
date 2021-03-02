@@ -1,5 +1,4 @@
 import pygame
-import random
 import parameters
 from gentopology import createsnc
 from GameEnv import GameEnv
@@ -9,6 +8,30 @@ pa = parameters.Parameters()
 snc = createsnc(pa.num_machines)
 env = None
 
+current_job = None
+current_page = 0
+job_i = 0
+
+def set_job_i(i):
+    global job_i
+    job_i = i
+
+def set_current_page(p):
+    global current_page
+    current_page = p
+
+def set_current_job(j):
+    global current_job
+    current_job = j
+
+def get_job_i():
+    return job_i
+
+def get_current_page():
+    return current_page
+
+def get_current_job():
+    return current_job
 def create_env(jobqueue):
     global env
     env = GameEnv(pa, snc, jobqueue)
@@ -16,13 +39,18 @@ def create_env(jobqueue):
 def get_env():
     return env
 
+speed_img = pygame.image.load("assets/speed.png")
 
 BACKGROUND_COLOR = (245, 240, 223)
+BACKGROUND_RGBA = (245/255, 240/255, 223/255, 1)
 JOB_SELECTED_COLOR = (117, 18, 57)
 JUST_PICKED_UP_COLOR = (51, 41, 45)
 SPEED_COLOR = (104, 156, 110)
+SPEED_RGBA = (104/255, 156/255, 110/255, 1)
 JOB_SIZE_COLOR = (191, 70, 40)
+JOB_SIZE_RGBA = (191/255, 70/255, 40/255, 1)
 GPU_REQUIRMENT_COLOR = (120, 90, 120)
+GPU_REQUIRMENT_RGBA = (120/255, 90/255, 120/255, 1)
 RUNNING_COLOR = (74, 181, 105)
 PROGRESS_BAR_COLOR = (73, 107, 133)
 JOB_STOP_COLOR = (173, 7, 35)
@@ -93,78 +121,40 @@ CPU_BORDER = int(0.002 * UNIT_LENGTH)
 
 # JOB attributes
 JOB_SPACE = 0.01 * UNIT_LENGTH
-JOB_WDITH = int(QUEUE_WIDTH - 2 * JOB_SPACE)
+JOB_WIDTH = int(QUEUE_WIDTH - 2 * JOB_SPACE)
 JOB_HEIGHT = int((QUEUE_HEIGHT - 9 * JOB_SPACE) / 8)
 JOB_BORDER = int(0.005 * UNIT_LENGTH)
 JOB_BORDER_SELECTED = int(0.009 * UNIT_LENGTH)
 
-ID_RECT_X = int(0.15 * JOB_WDITH)
-ID_RECT_Y = int(0.1 * JOB_HEIGHT)
-ID_RECT_WIDTH = int(0.4 * JOB_HEIGHT)
-JOB_SIZE_X = int(ID_RECT_X + ID_RECT_WIDTH + 0.05 * JOB_WDITH)
-JOB_SIZE_Y = ID_RECT_Y
-JOB_SIZE_WIDTH = int(0.15 * JOB_WDITH)
-JOB_SIZE_HEIGHT = ID_RECT_WIDTH
-JOB_SIZE_MAX = JOB_SIZE_Y + JOB_SIZE_HEIGHT
+RUNNING_CIRCLE_X = int(0.03 * JOB_WIDTH)
+RUNNING_CIRCLE_WIDTH = int(0.6 * JOB_HEIGHT)
+RUNNING_CIRCLE_Y = int(0.2* JOB_HEIGHT)
+
+ASSET_X = int(RUNNING_CIRCLE_X + RUNNING_CIRCLE_WIDTH + 0.03 * JOB_WIDTH)
+ASSET_Y = int(0.1 * JOB_HEIGHT)
+ASSET_WIDTH = int(0.5 * JOB_HEIGHT)
+ASSET_HEIGHT = int(0.8 * JOB_HEIGHT)
+
+GPU_GRID_X = int(ASSET_X + ASSET_WIDTH + 0.03 * JOB_WIDTH)
+GPU_GRID_Y = ASSET_Y
+# GPU_GRID_WIDTH = int(0.25 * JOB_WIDTH)
+GPU_GRID_HEIGHT = ASSET_HEIGHT
+GPU_GRID_WIDTH = GPU_GRID_HEIGHT
+GPU_GRID_BORDER = int(0.003 * UNIT_LENGTH)
+
+SPEED_X = int(GPU_GRID_X + GPU_GRID_WIDTH + 0.03 * JOB_WIDTH)
+SPEED_Y = ASSET_Y
+SPEED_WIDTH = int(ASSET_WIDTH*1.2)
+SPEED_HEIGHT = int(0.5 * JOB_HEIGHT)
+
+JOB_SIZE_X = SPEED_X
+JOB_SIZE_Y = int(SPEED_Y + SPEED_HEIGHT + 0.1 * JOB_HEIGHT)
+JOB_SIZE_WIDTH = SPEED_WIDTH
+JOB_SIZE_HEIGHT = int(ASSET_Y + ASSET_HEIGHT - JOB_SIZE_Y )
 JOB_SIZE_BORDER = int(0.003 * UNIT_LENGTH)
 
-SPEED_ONE_X = int(ID_RECT_X + JOB_SIZE_X + 0.05 * JOB_WDITH)
-SPEED_ONE_Y = ID_RECT_Y
-SPEED_TWO_X = SPEED_ONE_X
-SPEED_TWO_Y = SPEED_ONE_Y + ID_RECT_WIDTH
-SPEED_THREE_X = int(SPEED_ONE_X + 0.08 * JOB_WDITH)
-SPEED_THREE_Y = int(ID_RECT_Y + 0.5 * ID_RECT_WIDTH)
-SPEED_SPACE = int(0.05 * JOB_WDITH + SPEED_THREE_X - SPEED_ONE_X)
-SPEED_BORDER = int(0.003 * UNIT_LENGTH)
+SPEED_ORIGIN_X = int(SPEED_X + SPEED_WIDTH/2)
+SPEED_ORIGIN_Y = (SPEED_Y + SPEED_HEIGHT - 0.01 * JOB_HEIGHT)
+SPEED_RADIUS = int(SPEED_WIDTH * 0.3)
 
-GPU_REQUIRE_X = ID_RECT_X
-GPU_REQUIRE_Y = int(ID_RECT_Y + ID_RECT_WIDTH + 0.05 * JOB_HEIGHT)
-GPU_REQUIRE_WIDTH = int(0.8 * JOB_WDITH)
-GPU_REQUIRE_HEIGHT = int(0.2 * JOB_HEIGHT)
-GPU_REQUIRE_BORDER = int(0.003 * UNIT_LENGTH)
-GPU_REQUIRE_CUBE_WIDTH = (0.1 * GPU_REQUIRE_WIDTH)
-GPU_REQUIRE_CUBE_HEIGHT = GPU_REQUIRE_HEIGHT
 
-ITERATION_BAR_X = GPU_REQUIRE_X
-ITERATION_BAR_Y = int(GPU_REQUIRE_Y + GPU_REQUIRE_HEIGHT+ 0.06 * JOB_HEIGHT)
-ITERATION_BAR_WIDTH = (GPU_REQUIRE_WIDTH / 2000)
-ITERATION_BAR_HEIGHT = int(0.15 * JOB_HEIGHT)
-ITERATION_BAR_BORDER = int(0.003 * UNIT_LENGTH)
-
-RUNNING_ONE_X = int(0.12 * JOB_WDITH)
-RUNNING_ONE_Y = ID_RECT_Y
-RUNNING_TWO_X = int(0.03 * JOB_WDITH)
-RUNNING_TWO_Y = ID_RECT_Y+int(0.5 * (ITERATION_BAR_Y + ITERATION_BAR_HEIGHT - ID_RECT_Y))
-RUNNING_THREE_X = RUNNING_ONE_X
-RUNNING_THREE_Y = int(ITERATION_BAR_Y + ITERATION_BAR_HEIGHT)
-STOPPED_JOB_X = int(ID_RECT_X/2)
-STOPPED_JOB_Y = int(JOB_HEIGHT/2)
-STOPPED_JOB_RADIUS = int(0.06 * JOB_WDITH)
-STOPPED_JOB_BORDER = int(0.003 * UNIT_LENGTH)
-
-n = 1
-def color_gen():
-    global n
-    r = int(random.random() * 256)
-    g = int(random.random() * 256)
-    b = int(random.random() * 256)
-    step = 256 / n
-    r += step
-    g += step
-    b += step
-    r = int(r) % 256
-    g = int(g) % 256
-    b = int(b) % 256
-    n += 1
-    if n >= 256:
-        n = 1
-    return (r, g, b)
-
-id_lst = []
-def id_gen():
-    global id_lst
-    if len(id_lst) == 0:
-        for i in range(50):
-            r = random.randint(1, 100)
-            if r not in id_lst: id_lst.append(r)
-    return id_lst.pop()
